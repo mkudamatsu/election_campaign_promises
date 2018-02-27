@@ -1,0 +1,6 @@
+[submodule "input/data_japanese-elections"]
+	path = input/data_japanese-elections
+	url = https://github.com/mkudamatsu/data_japanese-elections
+[submodule "input/data_asahi-todai"]
+	path = input/data_asahi-todai
+	url = https://github.com/mkudamatsu/data_asahi-todai
