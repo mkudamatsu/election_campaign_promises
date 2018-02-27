@@ -1,0 +1,7 @@
+# Intermediate and output data directories
+build_temp/
+build_output/
+
+# Intermediate and output directories for analysis results
+analysis_temp/
+analysis_output/
