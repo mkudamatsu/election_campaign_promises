@@ -1,5 +1,6 @@
 * Program Setup
-version 13    			         	// Set Version number for backward compatibility
+version 15    			         	// Set Version number for backward compatibility
+	// Essential to set version 15; otherwise the candidate's name in Japanese gets garbled.
 set more off           			 	// Disable partitioned output
 clear all							// Start with a clean slate
 capture log close					// Close the log if accidentally still open
@@ -15,10 +16,23 @@ program define main
 	local indata_election_results "../input/data_japanese-elections/data/lower_house_results.csv"
 	* Process
 	merge_data `indata_asahi_todai' `indata_election_results'
-	
+	gen_voteshare_margin
+	gen_nameid
+	clean_varnames
 	* Output
-*	capture mkdir ../build_temp
-*	save_output "../build_temp/district_year_reelect.dta"
+	order ///
+		smd_prefecture smd_number year winner      /// Keys
+		voteshare_margin                           /// New variable
+		smallgov party incumbent former_mp revival /// Variables inherited from input 1
+		age terms_served vote voteshare            /// Variables inherited from input 2
+		nameid_own nameid_opponent                 /// Foreign keys
+		smd_prefecture_name name name_english      // For easing the browsing of data
+	keep ///
+		smd_prefecture-nameid_opponent
+	sort ///
+		smd_prefecture smd_number year winner
+	capture mkdir ../build_temp
+	save_output "../build_temp/smd_year_winner_voteshare_margin.dta"
 end
 
 * Subfunctions that appear within the main function
@@ -31,6 +45,9 @@ program define merge_data
 	keep if year == 2003 | year == 2005 | year == 2009 | year == 2012 | year == 2014
 	* Drop unnecessary variables
 	drop party mag exp exppv ldp dpj poh
+	drop status // This variable is unreliable. 
+	* Rename variables to avoid being overwritten during merging
+	rename name name_english
 	* Keep only the winner and the runner-up
 	keep if rank == 1 | rank == 2
 	gen winner = rank == 1
@@ -80,6 +97,36 @@ program define unit_test
 	egen `count' = total(`one'), by(`group')
 	assert `count' == 2 if _merge == 3
 	drop _merge
+end
+
+capture program drop gen_voteshare_margin
+program define gen_voteshare_margin
+	tempvar winner_voteshare loser_voteshare
+	egen `winner_voteshare' = max(voteshare), by(year smd_prefecture smd_number)
+	egen `loser_voteshare'  = min(voteshare), by(year smd_prefecture smd_number)
+	gen  voteshare_margin = `winner_voteshare' - `loser_voteshare' if winner == 1
+	replace voteshare_margin = `loser_voteshare' - `winner_voteshare' if winner == 0
+end
+
+capture program drop gen_nameid
+program define gen_nameid
+	* Own name
+	rename nameid nameid_own
+	* Opponent's name
+	tempvar nameid_winner nameid_loser nameid_winner_temp nameid_loser_temp
+	gen `nameid_winner_temp' = nameid if winner == 1
+	egen `nameid_winner' = max(`nameid_winner_temp'), by(year smd_prefecture smd_number)
+	gen `nameid_loser_temp' = nameid if winner == 0
+	egen `nameid_loser' = max(`nameid_loser_temp'), by(year smd_prefecture smd_number)
+	egen nameid_opponent = max(`nameid_winner'), by(year smd_prefecture smd_number)
+	replace nameid_opponent = `nameid_loser' if winner == 1
+end
+
+capture program drop clean_varnames
+program define clean_varnames
+	rename ku smd_prefecture_name
+	rename previous terms_served
+	lab var terms_served "# of terms served"
 end
 
 capture program drop save_output
