@@ -5,3 +5,6 @@ build_output/
 # Intermediate and output directories for analysis results
 analysis_temp/
 analysis_output/
+
+# Log files
+log/
