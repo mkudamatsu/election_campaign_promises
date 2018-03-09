@@ -12,8 +12,10 @@ capture log close					// Close the log if accidentally still open
 capture program drop main
 program define main
 	* Inputs
-	local indata_asahi_todai "../input/data_asahi-todai/data/nameid_year_all.csv"
-	local indata_election_results "../input/data_japanese-elections/data/lower_house_results.csv"
+	local indata_asahi_todai "./input/data_asahi-todai/data/nameid_year_all.csv"
+	local indata_election_results "./input/data_japanese-elections/data/lower_house_results.csv"
+*	local indata_asahi_todai "../input/data_asahi-todai/data/nameid_year_all.csv"
+*	local indata_election_results "../input/data_japanese-elections/data/lower_house_results.csv"
 	* Process
 	merge_data `indata_asahi_todai' `indata_election_results'
 	gen_voteshare_margin
@@ -32,7 +34,7 @@ program define main
 	sort ///
 		smd_prefecture smd_number year winner
 	capture mkdir ../build_temp
-	save_output "../build_temp/smd_year_winner_voteshare_margin.dta"
+	save_output "./build_temp/smd_year_winner_voteshare_margin.dta"
 end
 
 * Subfunctions that appear within the main function
