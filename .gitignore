@@ -8,3 +8,7 @@ analysis_output/
 
 # Log files
 log/
+
+# SConstrust outputs
+.sconsign.dblite
+
